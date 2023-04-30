@@ -14,6 +14,7 @@ from asyncio import sleep
 
 
 class krugMod(loader.Module):
+    """Модуль который превращает видео в кружки"""
     strings = {"name": "krug"}
 
     async def krugcmd(self, message):
