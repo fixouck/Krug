@@ -18,6 +18,7 @@ class krugMod(loader.Module):
     strings = {"name": "krug"}
 
     async def krugcmd(self, message):
+        """Видео"""
         args = utils.get_args_raw(message)
 
         if not args and not message.is_reply:
