@@ -7,7 +7,7 @@
                                   
 # Licensed under the GNU GPLv3
 
-# meta developer: @fixouckkk
+# meta developer: @fixouckkkkk
 
 from .. import loader, utils
 from asyncio import sleep
