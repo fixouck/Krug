@@ -20,7 +20,7 @@ class KrugMod(loader.Module):
     strings = {"name": "Krug"}
 
     async def krugcmd(self, message):
-        """.krug - превращает видео размером не больше 8 МБ и форматом 1:1 в видеосообщение"""
+        """Превращает видео размером не больше 8 МБ и форматом 1:1 в видеосообщение"""
         reply = await message.get_reply_message()
         if not reply or not reply.file or reply.file.mime_type.split("/")[0] != "video":
             await message.edit("Ответьте на видео размером не больше 8 МБ и форматом 1:1.")
