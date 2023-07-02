@@ -1,3 +1,9 @@
+from .. import loader
+from moviepy.editor import *
+import os
+import tempfile
+import math
+
  #  __ _                      _    
 #  / _(_)                    | |   
 # | |_ ___  _____  _   _  ___| | __
@@ -6,48 +12,41 @@
 # |_| |_/_/\_\___/ \__,_|\___|_|\_\
                                   
 # Licensed under the GNU GPLv3
+#meta developer: @fixouck_qq
 
-# meta developer: @fixouckkkkk
-
-from .. import loader, utils
-from asyncio import sleep
-
-
-class krugMod(loader.Module):
-    """Модуль который превращает видео в кружки"""
-    strings = {"name": "krug"}
+@loader.tds
+class KrugMod(loader.Module):
+    """Превращает видео в видеосообщение"""
+    strings = {"name": "Krug"}
 
     async def krugcmd(self, message):
-        """Видео ответом"""
-        args = utils.get_args_raw(message)
-
-        if not args and not message.is_reply:
-            await utils.answer(message, "Ошибка: сообщение или ответ на сообщение должны содержать видео.")
+        """.krug - превращает видео размером не больше 8 МБ и форматом 1:1 в видеосообщение"""
+        reply = await message.get_reply_message()
+        if not reply or not reply.file or reply.file.mime_type.split("/")[0] != "video":
+            await message.edit("Ответьте на видео размером не больше 8 МБ и форматом 1:1.")
             return
 
-        if not args and message.is_reply:
-            reply = await message.get_reply_message()
-            if not reply.media:
-                await utils.answer(message, "Ошибка: в ответе нет видео.")
-                return
-            else:
-                media = reply.media
-        else:
-            try:
-                first_arg = args.split()[0]
-                media = await message.client.download_media(await message.get_reply_message(), bytes)
-            except IndexError:
-                await utils.answer(message, "Ошибка: в сообщении должно быть указано видео.")
-                return
-            except AttributeError:
-                await utils.answer(message, "Ошибка: в сообщении должно быть указано видео.")
-                return
-        
-        bot = "@videoconverter_bot"
-        async with message.client.conversation(bot) as conv:
-            enter = await conv.send_file(media)
-            await sleep(1)
-            krug = await conv.get_response()
-            await utils.answer(message, krug)
-            await enter.delete()
-            await krug.delete()
+        if reply.file.size > 8 * 1024 * 1024:
+            await message.edit("Размер видео должен быть не больше 8 МБ.")
+            return
+
+        await message.edit("Обработка видео...")
+
+        video_path = await reply.download_media()
+        video = VideoFileClip(video_path)
+
+        if not math.isclose(video.aspect_ratio, 1, rel_tol=1e-2):
+            video.close()
+            os.remove(video_path)
+            await message.edit("Формат видео должен быть 1:1.")
+            return
+
+        with tempfile.NamedTemporaryFile(suffix=".mp4", delete=False) as temp_video:
+            video.write_videofile(temp_video.name, codec="libx264", threads=4)
+
+        video.close()
+        os.remove(video_path)
+
+        await message.delete()
+        await message.client.send_file(message.to_id, temp_video.name, reply_to=reply.id, video_note=True)
+        os.remove(temp_video.name)
