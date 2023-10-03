@@ -56,3 +56,38 @@ class KrugMod(loader.Module):
             video_note=True
         )
         os.remove(temp_video.name)
+
+async def kruggcmd(self, message):
+    """Сжимает видео до 1:1"""
+    reply = await message.get_reply_message()
+    if not reply or not reply.file or reply.file.mime_type.split("/")[0] != "video":
+        await message.edit("❌ Ответьте на видео размером не больше 8 МБ.")
+        return
+
+    if reply.file.size > 8 * 1024 * 1024:
+        await message.edit("❌ Размер видео должен быть не больше 8 МБ.")
+        return
+
+    await message.edit("⏳ Обработка видео...")
+
+    video_path = await reply.download_media()
+    video = VideoFileClip(video_path)
+
+    max_dimension = max(video.size)
+    resized_video = video.resize((max_dimension, max_dimension))
+
+    with tempfile.NamedTemporaryFile(suffix=".mp4", delete=False) as temp_video:
+        resized_video.write_videofile(temp_video.name, codec="libx264", threads=4)
+
+    video.close()
+    resized_video.close()
+    os.remove(video_path)
+
+    await message.delete()
+    await message.client.send_file(
+        message.to_id,
+        temp_video.name,
+        reply_to=reply.id,
+        video_note=True
+    )
+    os.remove(temp_video.name)
